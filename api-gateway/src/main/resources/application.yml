@@ -1,0 +1,50 @@
+# Nome dell'applicazione
+spring:
+  application:
+    name: api-gateway
+
+  # Routing - instradare le richieste verso i microservizi registrati su Eureka
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 60000
+        response-timeout: 60000
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+        - id: activity-service
+          uri: lb://activity-service
+          predicates:
+            - Path=/activity/**
+        - id: nutrition-service
+          uri: lb://nutrition-service
+          predicates:
+            - Path=/nutrition/**
+        - id: body-measurement-service
+          uri: lb://body-measurement-service
+          predicates:
+            - Path=/body-measurement/**
+
+# Porta del gateway
+server:
+  port: 8080
+
+# Configurazione di Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    reactor.netty.http.client: DEBUG
