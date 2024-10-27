@@ -2,7 +2,10 @@ package it.fartingbrains.fitness.rest;
 
 import it.fartingbrains.fitness.common.annotation.Loggable;
 import it.fartingbrains.fitness.common.constant.AuthConstants;
+import it.fartingbrains.fitness.common.enums.CustomErrorCodes;
+import it.fartingbrains.fitness.common.util.CommonUtils;
 import it.fartingbrains.fitness.entity.User;
+import it.fartingbrains.fitness.rest.dto.LoginRequest;
 import it.fartingbrains.fitness.service.TokenService;
 import it.fartingbrains.fitness.service.UserService;
 import org.slf4j.Logger;
@@ -33,36 +36,86 @@ public class AuthController {
 
     @Loggable
     @PostMapping(AuthConstants.LOGIN_PATH)
-    public Mono<ResponseEntity<String>> login(@RequestBody it.fartingbrains.fitness.rest.dto.LoginRequest loginRequest) {
+    public Mono<ResponseEntity<?>> login(@RequestBody LoginRequest loginRequest) {
         return Mono.defer(() -> {
+            String errorMessage;
+
+            String username = loginRequest.getUsername();
+            String password = loginRequest.getPassword();
+
+            if(username == null || password == null) {
+                errorMessage = "[login] Username or password null.";
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
+            }
+
+            if(userService.findByUsername(username) == null) {
+                errorMessage = String.format("[login] Username [%s] not found.", username);
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.NOT_FOUND);
+            }
+
             try {
                 Authentication auth = authManager.authenticate(
                         new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
                 );
 
                 if (auth.isAuthenticated()) {
-                    String token = tokenService.generateToken(auth); // Genera il token in modo sincrono
-                    return Mono.just(ResponseEntity.ok(token));
+                    _log.info("[login] User {} authenticated.", username);
+                    return Mono.just(ResponseEntity.ok(tokenService.generateToken(auth)));
                 } else {
-                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized"));
+                    errorMessage = "[login] Password not recognized.";
+                    _log.error(errorMessage);
+                    return CommonUtils.createErrorResponse(errorMessage, HttpStatus.UNAUTHORIZED);
                 }
             } catch (AuthenticationException ex) {
-                // Log exception if needed
-                return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized"));
+                errorMessage = String.format("[login] Error during authenticate user [%s]", username);
+                _log.error(errorMessage, ex);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         });
     }
-
 
     @Loggable
     @PostMapping(AuthConstants.REGISTER_PATH)
     public Mono<ResponseEntity<?>> register(@RequestBody User user) {
         return Mono.defer(() -> {
-            if (user.getUsername() != null && user.getPassword() != null && user.getEmail() != null) {
+            String errorMessage;
+
+            String username = user.getUsername();
+            String password = user.getPassword();
+            String email = user.getEmail();
+
+            if(username == null || password == null || email == null) {
+                errorMessage = "[register] Username, or password, or email null.";
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.BAD_REQUEST);
+            }
+
+            if(userService.findByUsername(username) != null) {
+                errorMessage = String.format("[register] Username [%s] already taken.", username);
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(
+                        errorMessage, CustomErrorCodes.USERNAME_ALREADY_EXISTS.getCode(), HttpStatus.CONFLICT
+                );
+            }
+
+            if(userService.findByEmail(email) != null) {
+                errorMessage = String.format("[register] Email [%s] already taken.", email);
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(
+                        errorMessage, CustomErrorCodes.EMAIL_ALREADY_EXISTS.getCode(), HttpStatus.CONFLICT
+                );
+            }
+
+            try {
                 userService.saveUser(user);
                 return Mono.just(ResponseEntity.ok("Registration Successfully!"));
+            } catch (Exception e) {
+                errorMessage = String.format("[register] Error saving user [%s]", user);
+                _log.error(errorMessage, e);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
         });
     }
 
