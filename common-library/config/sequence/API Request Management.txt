@@ -1,0 +1,31 @@
+title API REQUEST
+
+actor user
+participant React
+participant Electron
+participant BE-Gateway
+participant BE-AuthService
+participant BE-Generic
+
+user -> React: do their request
+activate user
+activate React
+React -> Electron: fetch accessToken
+activate Electron
+Electron --> React: return accessToken
+deactivate Electron
+React -> BE-Gateway: request API with accessToken
+activate BE-Gateway
+BE-Gateway -> BE-AuthService: validate accessToken
+activate BE-AuthService
+BE-AuthService --> BE-Gateway: return OK
+deactivate BE-AuthService
+BE-Gateway -> BE-Generic: continue with request
+activate BE-Generic
+BE-Generic --> BE-Gateway: return response
+deactivate BE-Generic
+BE-Gateway --> React: return response
+deactivate BE-Gateway
+React --> user: return response
+deactivate React
+deactivate user

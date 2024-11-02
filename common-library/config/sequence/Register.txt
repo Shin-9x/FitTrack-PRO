@@ -1,0 +1,29 @@
+title REGISTER
+
+actor user
+participant FE
+participant BE-Gateway
+participant BE-AuthService
+participant DB
+
+
+group NO AUTH REQUIRED
+user -> FE: want to register
+activate user
+activate FE
+FE -> BE-Gateway: /auth/register
+activate BE-Gateway
+BE-Gateway -> BE-AuthService: /auth/register
+activate BE-AuthService
+BE-AuthService -> DB: saveUser()
+activate DB
+DB --> BE-AuthService: return user
+deactivate DB
+BE-AuthService --> BE-Gateway: return OK
+deactivate BE-AuthService
+BE-Gateway --> FE: return OK
+deactivate BE-Gateway
+FE --> user: redirect to /login
+deactivate FE
+deactivate user
+end

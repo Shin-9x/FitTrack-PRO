@@ -5,7 +5,9 @@ import it.fartingbrains.fitness.common.constant.AuthConstants;
 import it.fartingbrains.fitness.common.enums.CustomErrorCodes;
 import it.fartingbrains.fitness.common.util.CommonUtils;
 import it.fartingbrains.fitness.entity.User;
+import it.fartingbrains.fitness.pojo.Token;
 import it.fartingbrains.fitness.rest.dto.LoginRequest;
+import it.fartingbrains.fitness.rest.dto.LoginResponse;
 import it.fartingbrains.fitness.service.TokenService;
 import it.fartingbrains.fitness.service.UserService;
 import org.slf4j.Logger;
@@ -32,6 +34,30 @@ public class AuthController {
         this.authManager = authManager;
         this.tokenService = tokenService;
         this.userService = userService;
+    }
+
+    @Loggable
+    @PostMapping(AuthConstants.REFRESH_ACCESS_TOKEN_PATH)
+    public Mono<ResponseEntity<?>> refresh(@RequestBody String refreshToken) {
+        return Mono.defer(() -> {
+            String errorMessage;
+
+            if (tokenService.validateToken(refreshToken)) {
+                Token newAccessToken = tokenService.refreshAccessToken(refreshToken);
+
+                if(newAccessToken == null) {
+                    errorMessage = "[refresh] Unable to obtain new Access Token";
+                    _log.error(errorMessage);
+                    return CommonUtils.createErrorResponse(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                return Mono.just(ResponseEntity.ok(newAccessToken));
+            } else {
+                errorMessage = String.format("[refresh] RefreshToken [%s] invalid or expired", refreshToken);
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.UNAUTHORIZED);
+            }
+        });
     }
 
     @Loggable
@@ -62,7 +88,11 @@ public class AuthController {
 
                 if (auth.isAuthenticated()) {
                     _log.info("[login] User {} authenticated.", username);
-                    return Mono.just(ResponseEntity.ok(tokenService.generateToken(auth)));
+
+                    Token accessToken = tokenService.generateAccessToken(auth);
+                    Token refreshToken = tokenService.generateRefreshToken(username);
+
+                    return Mono.just(ResponseEntity.ok(new LoginResponse(accessToken, refreshToken)));
                 } else {
                     errorMessage = "[login] Password not recognized.";
                     _log.error(errorMessage);

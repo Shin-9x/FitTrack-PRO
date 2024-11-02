@@ -1,0 +1,20 @@
+title EXPIRED REFRESH TOKEN
+
+actor user
+participant React
+participant Electron
+
+user -> React: do their request
+activate user
+React -> Electron: fetch accessToken
+activate React
+activate Electron
+Electron --> React: return expired
+deactivate Electron
+React -> Electron: fetch refreshToken
+activate Electron
+Electron --> React: return expired
+deactivate Electron
+React --> user: redirect to /login
+deactivate React
+deactivate user

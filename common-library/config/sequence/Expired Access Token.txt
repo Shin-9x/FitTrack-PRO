@@ -1,0 +1,33 @@
+title EXPIRED ACCESS TOKEN
+
+participant React
+participant Electron
+participant BE-Gateway
+participant BE-AuthService
+
+React -> Electron: fetch accessToken
+activate React
+activate Electron
+Electron --> React: return expired
+deactivate Electron
+React -> Electron: fetch refreshToken
+activate Electron
+Electron --> React: return refreshToken
+deactivate Electron
+React -> BE-Gateway: /auth/refresh - oauth2 w/ refreshToken
+activate BE-Gateway
+BE-Gateway -> BE-AuthService: /auth/validate
+activate BE-AuthService
+BE-AuthService --> BE-Gateway: return OK
+deactivate BE-AuthService
+BE-Gateway -> BE-AuthService: /auth/refresh
+activate BE-AuthService
+BE-AuthService --> BE-Gateway: return new access Token
+deactivate BE-AuthService
+BE-Gateway --> React: return new AccessToken
+deactivate BE-Gateway
+React -> Electron: save new AccessToken
+activate Electron
+Electron --> React: return OK
+deactivate Electron
+deactivate React

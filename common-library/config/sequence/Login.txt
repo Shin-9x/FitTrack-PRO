@@ -1,0 +1,28 @@
+title LOGIN
+
+actor user
+participant React
+participant Electron
+participant BE-Gateway
+participant BE-AuthService
+
+group NO AUTH REQUIRED
+user -> React: /login
+activate user
+activate React
+React -> BE-Gateway: /auth/login
+activate BE-Gateway
+BE-Gateway -> BE-AuthService: /auth/login
+activate BE-AuthService
+BE-AuthService --> BE-Gateway: return accessToken / refreshToken
+deactivate BE-AuthService
+BE-Gateway --> React: return tokens
+deactivate BE-Gateway
+React -> Electron: save Tokens into Keytar
+activate Electron
+Electron --> React: return OK
+deactivate Electron
+React --> user: redirect to /homepage
+deactivate React
+deactivate user
+end

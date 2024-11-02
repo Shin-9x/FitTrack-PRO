@@ -11,6 +11,7 @@ public class AuthConstants {
 
     public static final String BASE_PATH = "/auth";
     public static final String LOGIN_PATH = "/login";
+    public static final String REFRESH_ACCESS_TOKEN_PATH = "/refresh";
     public static final String REGISTER_PATH = "/register";
     public static final String VALIDATE_PATH = "/validate";
 
