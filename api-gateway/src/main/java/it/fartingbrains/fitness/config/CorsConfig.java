@@ -11,16 +11,8 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class CorsConfig {
-    private final Logger _log = LoggerFactory.getLogger(CorsConfig.class);
-
-    @PostConstruct
-    public void test() {
-        _log.info("### CORS CONFIG CALLED ###");
-    }
-
     @Bean
     public CorsWebFilter corsWebFilter() {
-        _log.info("### CORS WEB FILTER METHOD CALLED ###");
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.addAllowedOrigin("http://localhost:5123"); // TODO: to generalize
         corsConfig.addAllowedMethod("*");
