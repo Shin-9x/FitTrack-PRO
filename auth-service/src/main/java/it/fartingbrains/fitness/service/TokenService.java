@@ -1,6 +1,8 @@
 package it.fartingbrains.fitness.service;
 
+import it.fartingbrains.fitness.common.constant.AuthConstants;
 import it.fartingbrains.fitness.pojo.Token;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -98,5 +100,23 @@ public class TokenService {
         }
 
         return generateAccessToken(new UsernamePasswordAuthenticationToken(username, user.getPassword()));
+    }
+
+    public String getUsernameFromHeader(HttpHeaders headers) {
+        String res = null;
+
+        String authorizationHeader = headers.getFirst(HttpHeaders.AUTHORIZATION);
+
+        if (authorizationHeader != null && authorizationHeader.startsWith(AuthConstants.BEARER)) {
+            String token = authorizationHeader.substring(AuthConstants.BEARER_PLUS_SPACE.length());
+
+            Jwt jwt = jwtDecoder.decode(token);
+
+            if(jwt != null) {
+                res = jwt.getSubject();
+            }
+        }
+
+        return res;
     }
 }

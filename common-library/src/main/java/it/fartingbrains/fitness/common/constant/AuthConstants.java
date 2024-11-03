@@ -14,6 +14,7 @@ public class AuthConstants {
     public static final String REFRESH_ACCESS_TOKEN_PATH = "/refresh";
     public static final String REGISTER_PATH = "/register";
     public static final String VALIDATE_PATH = "/validate";
+    public static final String FETCH_USER_PATH = "/fetch-user";
 
     public static final List<String> NO_AUTH_API_PATHS = List.of(
             BASE_PATH + LOGIN_PATH,

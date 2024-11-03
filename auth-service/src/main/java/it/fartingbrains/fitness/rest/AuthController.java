@@ -12,6 +12,7 @@ import it.fartingbrains.fitness.service.TokenService;
 import it.fartingbrains.fitness.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -155,9 +156,28 @@ public class AuthController {
     }
 
     @Loggable
-    @GetMapping("/pippo")
-    public Mono<String> getPippo() {
-        _log.info("################## GET PIPPO #################");
-        return Mono.just("DAJE ROMA DAJE");
+    @GetMapping(AuthConstants.FETCH_USER_PATH)
+    public Mono<ResponseEntity<?>> getUser(@RequestHeader HttpHeaders headers) {
+        return Mono.defer(() -> {
+            String username = tokenService.getUsernameFromHeader(headers);
+
+            String errorMessage;
+
+            if(username == null) {
+                errorMessage = "[getUser] Unable to retrieve username from header";
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.NOT_FOUND);
+            }
+
+            User user = userService.findByUsername(username);
+
+            if(user == null) {
+                errorMessage = String.format("[getUser] User [%s] not found.", username);
+                _log.error(errorMessage);
+                return CommonUtils.createErrorResponse(errorMessage, HttpStatus.NOT_FOUND);
+            }
+
+            return Mono.just(ResponseEntity.ok(User.toBE(user)));
+        });
     }
 }

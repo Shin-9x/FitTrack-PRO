@@ -1,6 +1,7 @@
 package it.fartingbrains.fitness.entity;
 
 import it.fartingbrains.fitness.common.constant.TableConstants;
+import it.fartingbrains.fitness.common.dto.UserBE;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -66,5 +67,17 @@ public class User {
                 ", createDate=" + createDate +
                 ", modifiedDate=" + modifiedDate +
                 '}';
+    }
+
+    public static UserBE toBE(User user) {
+        UserBE userBE = new UserBE();
+
+        if(user == null) { return userBE; }
+
+        userBE.setId(user.getId());
+        userBE.setUsername(user.getUsername());
+        userBE.setEmail(user.getEmail());
+
+        return userBE;
     }
 }
